@@ -7,9 +7,8 @@ import (
 )
 
 type Configuration struct {
-	Adress string
-	DBName string
-	DBSync bool
+	Adress string `json:"adress"`
+	DBName string `json:"dbname"`
 }
 
 var config Configuration

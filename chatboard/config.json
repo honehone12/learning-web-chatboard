@@ -1,5 +1,4 @@
 {
-    "Adress": ":8080",
-    "DBName": "chatboard",
-    "DBSync": false
+    "adress": ":8080",
+    "dbname": "chatboard"
 }

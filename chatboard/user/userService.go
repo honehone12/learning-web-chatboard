@@ -2,6 +2,8 @@ package user
 
 import "xorm.io/xorm"
 
-func OpenService(dbEngine *xorm.Engine) {
+var engine *xorm.Engine
 
+func OpenService(dbEngine *xorm.Engine) {
+	engine = dbEngine
 }
