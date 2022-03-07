@@ -7,8 +7,9 @@ import (
 )
 
 type Configuration struct {
-	Adress string `json:"adress"`
-	DBName string `json:"dbname"`
+	Adress    string `json:"adress"`
+	DBName    string `json:"dbname"`
+	LogToFile bool   `json:"log_to_file"`
 }
 
 var config Configuration
@@ -18,7 +19,6 @@ func LoadConfig() (Configuration, error) {
 	file, err := os.Open(confName)
 	if err != nil {
 		log.Fatalln("could not open config file.")
-		return config, err
 	}
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&config)

@@ -18,3 +18,11 @@ type Post struct {
 	ThreadID  int       `xorm:"thread_id"`
 	CreatedAt time.Time `xorm:"created_at"`
 }
+
+func (thread *Thread) When() string {
+	return thread.CreatedAt.Format("2006/Jan/2 at 3:04pm")
+}
+
+func (post *Post) When() string {
+	return post.CreatedAt.Format("2006/Jan/2 at 3:04pm")
+}
