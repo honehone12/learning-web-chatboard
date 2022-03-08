@@ -3,19 +3,19 @@ package thread
 import "time"
 
 type Thread struct {
-	ID        int       `xorm:"id"`
-	UUID      string    `xorm:"uuid"`
+	Id        int       `xorm:"id"`
+	UuId      string    `xorm:"uu_id"`
 	Topic     string    `xorm:"topic"`
-	UserID    int       `xorm:"user_id"`
+	UserId    int       `xorm:"user_id"`
 	CreatedAt time.Time `xorm:"created_at"`
 }
 
 type Post struct {
-	ID        int       `xorm:"id"`
-	UUID      string    `xorm:"uuid"`
+	Id        int       `xorm:"id"`
+	UuId      string    `xorm:"uu_id"`
 	Body      string    `xorm:"body"`
-	UserID    int       `xorm:"user_id"`
-	ThreadID  int       `xorm:"thread_id"`
+	UserId    int       `xorm:"user_id"`
+	ThreadId  int       `xorm:"thread_id"`
 	CreatedAt time.Time `xorm:"created_at"`
 }
 

@@ -3,8 +3,8 @@ package user
 import "time"
 
 type User struct {
-	ID        int       `xorm:"id"`
-	UUID      string    `xorm:"uuid"`
+	Id        int       `xorm:"id"`
+	UuId      string    `xorm:"uu_id"`
 	Name      string    `xorm:"name"`
 	Email     string    `xorm:"email"`
 	Password  string    `xorm:"password"`
@@ -12,9 +12,9 @@ type User struct {
 }
 
 type Session struct {
-	ID        int       `xorm:"id"`
-	UUID      string    `xorm:"uuid"`
+	Id        int       `xorm:"id"`
+	UuId      string    `xorm:"uu_id"`
 	Email     string    `xorm:"email"`
-	UserID    int       `xorm:"user_id"`
+	UserId    int       `xorm:"user_id"`
 	CreatedAt time.Time `xorm:"created_at"`
 }
