@@ -2,7 +2,7 @@ package user
 
 import (
 	"chatboard/common"
-	"chatboard/message"
+	"chatboard/models"
 	"testing"
 )
 
@@ -12,17 +12,16 @@ func Test_CreateUser(t *testing.T) {
 		t.Error(err)
 	}
 	OpenService(engine)
-	res := CallService(&message.Message{
-		Service:  message.ServiceCall,
+	res := CallService(&common.Message{
+		Service:  common.ServiceCall,
 		FuncType: CreateUser,
-		Data: User{
+		Data: models.User{
 			Name:     "TestingTaro",
 			Email:    "TestingTaro@yapoo.com",
 			Password: "testttest#110",
 		},
 	})
-	resData, ok := res.Data.(int64)
-	if ok {
+	if resData, ok := res.Data.(int64); ok {
 		if resData != 1 {
 			t.Errorf("response was %v", resData)
 		}

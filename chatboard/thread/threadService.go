@@ -2,7 +2,7 @@ package thread
 
 import (
 	"chatboard/common"
-	"chatboard/message"
+	"chatboard/models"
 	"errors"
 	"time"
 
@@ -17,7 +17,7 @@ func OpenService(dbEngine *xorm.Engine) {
 }
 
 const (
-	Unknown message.FuncTypeT = iota
+	Unknown common.FuncTypeT = iota
 	GetNumReplies
 	GetAllPostsInThread
 	GetAllThreads
@@ -26,34 +26,34 @@ const (
 	CreatePost
 )
 
-func CallService(msg *message.Message) *message.Message {
-	if msg.Service == message.ServiceCall {
+func CallService(msg *common.Message) *common.Message {
+	if msg.Service == common.ServiceCall {
 		return callServiceInternal(msg.FuncType, &msg.Data)
 	} else {
-		return &message.Message{
-			Service:  message.Respose,
+		return &common.Message{
+			Service:  common.Respose,
 			FuncType: Unknown,
 			Data:     errors.New("recieved responce message as service call"),
 		}
 	}
 }
 
-func callServiceInternal(funcType message.FuncTypeT, data *interface{}) *message.Message {
+func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.Message {
 	var err error
-	var resFuncType message.FuncTypeT = Unknown
+	var resFuncType common.FuncTypeT = Unknown
 	var resData interface{}
 	switch funcType {
 	case GetNumReplies:
 		resFuncType = GetNumReplies
 		var id int
-		if err = message.ConvertType(data, &id); err != nil {
+		if err = common.ConvertType(data, &id); err != nil {
 			break
 		}
 		resData, err = getNumReplies(id)
 	case GetAllPostsInThread:
 		resFuncType = GetAllPostsInThread
-		var id int
-		if err = message.ConvertType(data, &id); err != nil {
+		var id uint
+		if err = common.ConvertType(data, &id); err != nil {
 			break
 		}
 		resData, err = getAllPostsInThread(id)
@@ -63,7 +63,7 @@ func callServiceInternal(funcType message.FuncTypeT, data *interface{}) *message
 	case GetThreadByUUID:
 		resFuncType = GetThreadByUUID
 		var uuid string
-		if err = message.ConvertType(data, &uuid); err != nil {
+		if err = common.ConvertType(data, &uuid); err != nil {
 			break
 		}
 		var ok bool
@@ -74,42 +74,35 @@ func callServiceInternal(funcType message.FuncTypeT, data *interface{}) *message
 		}
 	case CreateThread:
 		resFuncType = CreateThread
-		var pair message.Pair
-		if err = message.ConvertType(data, &pair); err != nil {
+		var contrib common.Contribution
+		if err = common.ConvertType(data, &contrib); err != nil {
 			break
 		}
-		var id int
-		var topic string
-		if err = message.ConvertType(&pair.ID, &id); err != nil {
-			break
-		}
-		if err = message.ConvertType(&pair.Data, &topic); err != nil {
-			break
-		}
-		resData, err = createThread(topic, id)
+		resData, err = createThread(
+			contrib.Content,
+			contrib.UserID,
+			contrib.UserName,
+		)
 	case CreatePost:
 		resFuncType = CreatePost
-		var pair message.Pair
-		if err = message.ConvertType(data, &pair); err != nil {
+		var contrib common.Contribution
+		if err = common.ConvertType(data, &contrib); err != nil {
 			break
 		}
-		var idPair message.IDPair
-		var topic string
-		if err = message.ConvertType(&pair.ID, &idPair); err != nil {
-			break
-		}
-		if err = message.ConvertType(&pair.Data, &topic); err != nil {
-			break
-		}
-		resData, err = createPost(topic, idPair.TableID, idPair.UserID)
+		resData, err = createPost(
+			contrib.Content,
+			contrib.ThreadID,
+			contrib.UserID,
+			contrib.UserName,
+		)
 	default:
 		err = errors.New("recieved unknown function request")
 	}
 	if err != nil {
 		resData = err
 	}
-	return &message.Message{
-		Service:  message.Respose,
+	return &common.Message{
+		Service:  common.Respose,
 		FuncType: resFuncType,
 		Data:     resData,
 	}
@@ -119,14 +112,14 @@ func getNumReplies(id int) (int64, error) {
 	return engine.Table("posts").Where("thread_id = ?", id).Count()
 }
 
-func getAllPostsInThread(id int) (posts []Post, err error) {
-	rows, err := engine.Table("posts").Rows(&Post{ThreadId: id})
+func getAllPostsInThread(id uint) (posts []models.Post, err error) {
+	rows, err := engine.Table("posts").Rows(&models.Post{ThreadId: id})
 	if err != nil {
 		return
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var post Post
+		var post models.Post
 		err = rows.Scan(post)
 		if err != nil {
 			return
@@ -136,21 +129,28 @@ func getAllPostsInThread(id int) (posts []Post, err error) {
 	return
 }
 
-func getAllThreads() (threads []Thread, err error) {
+///////////////////////////////////////////////
+// here should be changed
+func getAllThreads() (threads []models.Thread, err error) {
 	err = engine.Table("threads").Desc("created_at").Find(&threads)
 	return
 }
 
-func getThreadByUUID(uuid string) (ok bool, thread *Thread, err error) {
-	thread = &Thread{UuId: uuid}
+func getThreadByUUID(uuid string) (ok bool, thread *models.Thread, err error) {
+	thread = &models.Thread{UuId: uuid}
 	ok, err = engine.Table("threads").Get(thread)
 	return
 }
 
-func createThread(topic string, userID int) (affected int64, err error) {
-	ins := Thread{
+func createThread(
+	topic string,
+	userID uint,
+	userName string,
+) (affected int64, err error) {
+	ins := models.Thread{
 		UuId:      common.NewUUIDString(),
 		Topic:     topic,
+		Owner:     userName,
 		UserId:    userID,
 		CreatedAt: time.Now(),
 	}
@@ -158,13 +158,19 @@ func createThread(topic string, userID int) (affected int64, err error) {
 	return
 }
 
-func createPost(body string, id int, userID int) (affected int64, err error) {
-	ins := Post{
-		UuId:      common.NewUUIDString(),
-		Body:      body,
-		UserId:    userID,
-		ThreadId:  id,
-		CreatedAt: time.Now(),
+func createPost(
+	body string,
+	threadID uint,
+	userID uint,
+	userName string,
+) (affected int64, err error) {
+	ins := models.Post{
+		UuId:        common.NewUUIDString(),
+		Body:        body,
+		Contributor: userName,
+		UserId:      userID,
+		ThreadId:    threadID,
+		CreatedAt:   time.Now(),
 	}
 	affected, err = engine.Table("posts").InsertOne(&ins)
 	return

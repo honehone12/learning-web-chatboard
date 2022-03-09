@@ -2,7 +2,6 @@ package thread
 
 import (
 	"chatboard/common"
-	"chatboard/message"
 	"testing"
 )
 
@@ -15,16 +14,16 @@ func Test_CreateThread(t *testing.T) {
 		t.Error(err)
 	}
 	OpenService(engine)
-	res := CallService(&message.Message{
-		Service:  message.ServiceCall,
+	res := CallService(&common.Message{
+		Service:  common.ServiceCall,
 		FuncType: CreateThread,
-		Data: message.Pair{
-			ID:   0,
-			Data: "Testingooo",
+		Data: common.Contribution{
+			Content:  "Testooo",
+			UserID:   0,
+			UserName: "TestingTaro",
 		},
 	})
-	resData, ok := res.Data.(int64)
-	if ok {
+	if resData, ok := res.Data.(int64); ok {
 		if resData != 1 {
 			t.Errorf("response was %v", resData)
 		}

@@ -3,7 +3,6 @@ package main
 import (
 	"chatboard/common"
 	"chatboard/route"
-	"chatboard/templates"
 	"chatboard/thread"
 	"chatboard/user"
 	"log"
@@ -18,6 +17,7 @@ func main() {
 		log.Fatalln(err.Error())
 	}
 	// open logger
+	// notice! gin also have its own logger
 	var logMode common.LogOutputMode
 	if config.LogToFile {
 		logMode = common.LogOutputFile
@@ -40,7 +40,6 @@ func main() {
 	user.OpenService(dbEngine)
 	thread.OpenService(dbEngine)
 	route.OpenService(webEngine)
-	templates.OpenService(webEngine)
 
 	common.LogInfo().Println("info test.")
 	common.LogWarning().Println("warning test")

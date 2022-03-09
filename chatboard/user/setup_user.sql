@@ -14,6 +14,6 @@ CREATE TABLE sessions (
   id         SERIAL PRIMARY KEY,
   uu_id       VARCHAR(64) NOT NULL UNIQUE,
   email      VARCHAR(255),
-  user_id    INTEGER REFERENCES users(id),
+  user_id    SERIAL REFERENCES users(id),
   created_at TIMESTAMP NOT NULL   
 );

@@ -2,7 +2,7 @@ package user
 
 import (
 	"chatboard/common"
-	"chatboard/message"
+	"chatboard/models"
 	"errors"
 	"time"
 
@@ -17,73 +17,89 @@ func OpenService(dbEngine *xorm.Engine) {
 }
 
 const (
-	Unknown message.FuncTypeT = iota
+	Unknown common.FuncTypeT = iota
 	CreateUser
 	CreateSession
 	GetSessionByUUID
+	GetUserByUUID
+	GetUserByEmail
 )
 
-func CallService(msg *message.Message) *message.Message {
-	if msg.Service == message.ServiceCall {
+func CallService(msg *common.Message) *common.Message {
+	if msg.Service == common.ServiceCall {
 		return callServiceInternal(msg.FuncType, &msg.Data)
 	} else {
-		return &message.Message{
-			Service:  message.Respose,
+		return &common.Message{
+			Service:  common.Respose,
 			FuncType: Unknown,
 			Data:     errors.New("recieved responce message as service call"),
 		}
 	}
 }
 
-func convertType(data *interface{}, target interface{}) (err error) {
-	switch target := target.(type) {
-	case *User:
-		data, ok := (*data).(User)
-		if ok {
-			*target = data
-		} else {
-			err = errors.New("failed to convert data into User")
-		}
-	default:
-		err = errors.New("unknown convert target")
-	}
-	return
-}
-
-func callServiceInternal(funcType message.FuncTypeT, data *interface{}) *message.Message {
+func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.Message {
 	var err error
-	var resFuncType message.FuncTypeT = Unknown
+	var resFuncType common.FuncTypeT = Unknown
 	var resData interface{}
 	switch funcType {
 	case CreateUser:
 		resFuncType = CreateUser
-		var user User
-		if err = convertType(data, &user); err != nil {
+		var user models.User
+		if err = common.ConvertType(data, &user); err != nil {
 			break
 		}
 		resData, err = createUser(&user)
 	case CreateSession:
 		resFuncType = CreateSession
-		var user User
-		if err = convertType(data, &user); err != nil {
+		var user models.User
+		if err = common.ConvertType(data, &user); err != nil {
 			break
 		}
 		resData, err = createSession(&user)
 	case GetSessionByUUID:
 		resFuncType = GetSessionByUUID
 		var uuid string
-		if err = message.ConvertType(data, &uuid); err != nil {
+		if err = common.ConvertType(data, &uuid); err != nil {
 			break
 		}
-		resData, err = getSessionByUUID(uuid)
+		var ok bool
+		if ok, resData, err = getSessionByUUID(uuid); err != nil {
+			break
+		} else if !ok {
+			err = errors.New("no sessions found")
+		}
+	case GetUserByUUID:
+		resFuncType = GetUserByUUID
+		var uuid string
+		if err = common.ConvertType(data, &uuid); err != nil {
+			break
+		}
+		var ok bool
+		if ok, resData, err = getUserByUUID(uuid); err != nil {
+			break
+		} else if !ok {
+			err = errors.New("no user found")
+		}
+	case GetUserByEmail:
+		resFuncType = GetUserByEmail
+		var email string
+		if err = common.ConvertType(data, &email); err != nil {
+			break
+		}
+		var ok bool
+		if ok, resData, err = getUserByEmail(email); err != nil {
+			break
+		} else if !ok {
+			err = errors.New("no user found")
+		}
 	default:
 		err = errors.New("recieved unknown function request")
 	}
 	if err != nil {
 		resData = err
 	}
-	return &message.Message{
-		Service:  message.Respose,
+	return &common.Message{
+		Service:  common.Respose,
 		FuncType: resFuncType,
 		Data:     resData,
 	}
@@ -91,7 +107,7 @@ func callServiceInternal(funcType message.FuncTypeT, data *interface{}) *message
 
 //////////////////////////////////////////////////
 // is good way encrypting user data here??
-func createUser(user *User) (affected int64, err error) {
+func createUser(user *models.User) (affected int64, err error) {
 	user.UuId = common.NewUUIDString()
 	user.Password = common.Encrypt(user.Password)
 	user.CreatedAt = time.Now()
@@ -101,8 +117,8 @@ func createUser(user *User) (affected int64, err error) {
 
 //////////////////////////////////////////////////
 // these methods have to work with gin/session
-func createSession(user *User) (affected int64, err error) {
-	session := Session{
+func createSession(user *models.User) (affected int64, err error) {
+	session := models.Session{
 		UuId:      common.NewUUIDString(),
 		Email:     user.Email,
 		UserId:    user.Id,
@@ -112,7 +128,25 @@ func createSession(user *User) (affected int64, err error) {
 	return
 }
 
-func getSessionByUUID(uuid string) (session, err error) {
+func getSessionByUUID(uuid string) (ok bool, session *models.Session, err error) {
+	session = &models.Session{UuId: uuid}
+	ok, err = engine.Table("sessions").Get(session)
+	return
+}
 
+func getUserByUUID(uuid string) (ok bool, user *models.User, err error) {
+	user = &models.User{UuId: uuid}
+	ok, err = getUser(user)
+	return
+}
+
+func getUserByEmail(email string) (ok bool, user *models.User, err error) {
+	user = &models.User{Email: email}
+	ok, err = getUser(user)
+	return
+}
+
+func getUser(user *models.User) (ok bool, err error) {
+	ok, err = engine.Table("users").Get(user)
 	return
 }
