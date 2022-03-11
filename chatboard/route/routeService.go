@@ -19,7 +19,7 @@ const (
       <a class="navbar-brand" href="/">KEIJIBAN</a>
     </div>
     <div class="nav navbar-nav navbar-right">
-      <a href="/login">Login</a>
+      <a href="/user/login">Login</a>
     </div>
   </div>
 </div>`
@@ -30,7 +30,7 @@ const (
 	  <a class="navbar-brand" href="/">KEIJIBAN</a>
     </div>
     <div class="nav navbar-nav navbar-right">
-	  <a href="/logout">Logout</a>
+	  <a href="/user/logout">Logout</a>
     </div>
   </div>
 </div>`
@@ -40,7 +40,7 @@ func OpenService(webEngine *gin.Engine) (groups []*gin.RouterGroup) {
 	// setup templates
 	webEngine.Static("/static", "./public")
 	webEngine.Delims("{{", "}}")
-	webEngine.LoadHTMLGlob("./templates/html/base/*")
+	webEngine.LoadHTMLGlob("./templates/html/*")
 
 	//setup routes
 	webEngine.GET("/", getIndex)
@@ -62,12 +62,25 @@ func OpenService(webEngine *gin.Engine) (groups []*gin.RouterGroup) {
 }
 
 func getErr(ctx *gin.Context) {
-
+	errMsg := ctx.Query("msg")
+	if err := checkLoggedIn(ctx); err != nil {
+		ctx.HTML(http.StatusOK, "error.html", gin.H{
+			"navbar": publicNavbar,
+			"msg":    errMsg,
+		})
+	} else {
+		//already logged in
+		ctx.HTML(http.StatusOK, "error.html", gin.H{
+			"navbar": privateNavbar,
+			"msg":    errMsg,
+		})
+	}
 }
 
-////////////////////////////////////////////////
-// here should be changed
 func getIndex(ctx *gin.Context) {
+	////////////////////////////////////////////////
+	// here should be changed
+	// get 10 or something
 	res := thread.CallService(&common.Message{
 		Service:  common.ServiceCall,
 		FuncType: thread.GetAllThreads,
@@ -92,7 +105,7 @@ func getIndex(ctx *gin.Context) {
 }
 
 func redirectToError(ctx *gin.Context, msg string) {
-	url := []string{"/err?msg=", msg}
+	url := []string{"/error?msg=", msg}
 	ctx.Redirect(http.StatusFound, strings.Join(url, ""))
 }
 

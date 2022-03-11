@@ -131,6 +131,7 @@ func getAllPostsInThread(id uint) (posts []models.Post, err error) {
 
 ///////////////////////////////////////////////
 // here should be changed
+// like get 10
 func getAllThreads() (threads []models.Thread, err error) {
 	err = engine.Table("threads").Desc("created_at").Find(&threads)
 	return

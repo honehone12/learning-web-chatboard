@@ -3,7 +3,7 @@ DROP TABLE threads;
 
 CREATE TABLE threads (
   id         SERIAL PRIMARY KEY,
-  uu_id       VARCHAR(64) NOT NULL UNIQUE,
+  uu_id       VARCHAR(255) NOT NULL UNIQUE,
   topic      TEXT,
   num_replies SERIAL,
   owner VARCHAR(255),
@@ -13,7 +13,7 @@ CREATE TABLE threads (
 
 CREATE TABLE posts (
   id         SERIAL PRIMARY KEY,
-  uu_id       VARCHAR(64) NOT NULL UNIQUE,
+  uu_id       VARCHAR(255) NOT NULL UNIQUE,
   body       TEXT,
   contributor VARCHAR(255),
   user_id    SERIAL REFERENCES users(id),
