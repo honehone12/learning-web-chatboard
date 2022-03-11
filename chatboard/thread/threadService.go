@@ -31,7 +31,7 @@ func CallService(msg *common.Message) *common.Message {
 		return callServiceInternal(msg.FuncType, &msg.Data)
 	} else {
 		return &common.Message{
-			Service:  common.Respose,
+			Service:  common.Response,
 			FuncType: Unknown,
 			Data:     errors.New("recieved responce message as service call"),
 		}
@@ -102,7 +102,7 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 		resData = err
 	}
 	return &common.Message{
-		Service:  common.Respose,
+		Service:  common.Response,
 		FuncType: resFuncType,
 		Data:     resData,
 	}
@@ -113,19 +113,7 @@ func getNumReplies(id int) (int64, error) {
 }
 
 func getAllPostsInThread(id uint) (posts []models.Post, err error) {
-	rows, err := engine.Table("posts").Rows(&models.Post{ThreadId: id})
-	if err != nil {
-		return
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var post models.Post
-		err = rows.Scan(post)
-		if err != nil {
-			return
-		}
-		posts = append(posts, post)
-	}
+	engine.Table("posts").Where("thread_id = ?").Find(&posts)
 	return
 }
 

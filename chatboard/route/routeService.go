@@ -87,12 +87,12 @@ func getIndex(ctx *gin.Context) {
 	})
 	if threads, ok := res.Data.([]models.Thread); ok {
 		if err := checkLoggedIn(ctx); err != nil {
-			//already logged in
 			ctx.HTML(http.StatusOK, "index.html", gin.H{
 				"navbar":  publicNavbar,
 				"threads": threads,
 			})
 		} else {
+			//already logged in
 			ctx.HTML(http.StatusOK, "index.html", gin.H{
 				"navbar":  privateNavbar,
 				"threads": threads,
@@ -110,14 +110,13 @@ func redirectToError(ctx *gin.Context, msg string) {
 }
 
 // this is login session
-// i want this to be deleted on browser closed
 func checkLoggedIn(ctx *gin.Context) (err error) {
-	cookie, err := ctx.Cookie("short-time")
+	uuid, err := ctx.Cookie("short-time")
 	if err == nil {
 		res := user.CallService(&common.Message{
 			Service:  common.ServiceCall,
 			FuncType: user.GetSessionByUUID,
-			Data:     cookie,
+			Data:     uuid,
 		})
 		if _, ok := res.Data.(*models.Session); ok {
 			// means just exist
@@ -130,11 +129,11 @@ func checkLoggedIn(ctx *gin.Context) (err error) {
 
 // this is just a footprint
 func checkFootprint(ctx gin.Context) {
-	cookie, err := ctx.Cookie("long-time")
+	uuid, err := ctx.Cookie("long-time")
 	if err == nil {
 		// cookie is stored
 		common.LogError().
-			Printf("cookie %s found but not implemented yet.", cookie)
+			Printf("cookie %s found but not implemented yet.", uuid)
 	} else {
 		// cookie is notstored
 		common.LogError().

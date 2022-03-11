@@ -12,7 +12,7 @@ type ServiceT uint8
 
 const (
 	ServiceCall ServiceT = iota
-	Respose     ServiceT = iota
+	Response    ServiceT = iota
 )
 
 type FuncTypeT uint8

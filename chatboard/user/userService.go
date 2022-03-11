@@ -23,6 +23,7 @@ const (
 	GetSessionByUUID
 	GetUserByUUID
 	GetUserByEmail
+	DeleteSessionByUUID
 )
 
 func CallService(msg *common.Message) *common.Message {
@@ -30,7 +31,7 @@ func CallService(msg *common.Message) *common.Message {
 		return callServiceInternal(msg.FuncType, &msg.Data)
 	} else {
 		return &common.Message{
-			Service:  common.Respose,
+			Service:  common.Response,
 			FuncType: Unknown,
 			Data:     errors.New("recieved responce message as service call"),
 		}
@@ -55,7 +56,7 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 		if err = common.ConvertType(data, &user); err != nil {
 			break
 		}
-		resData, err = createSession(&user)
+		_, resData, err = createSession(&user)
 	case GetSessionByUUID:
 		resFuncType = GetSessionByUUID
 		var uuid string
@@ -92,6 +93,13 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 		} else if !ok {
 			err = errors.New("no user found")
 		}
+	case DeleteSessionByUUID:
+		resFuncType = DeleteSessionByUUID
+		var uuid string
+		if err = common.ConvertType(data, &uuid); err != nil {
+			break
+		}
+		resData, err = deleteSessionByUUID(uuid)
 	default:
 		err = errors.New("recieved unknown function request")
 	}
@@ -99,7 +107,7 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 		resData = err
 	}
 	return &common.Message{
-		Service:  common.Respose,
+		Service:  common.Response,
 		FuncType: resFuncType,
 		Data:     resData,
 	}
@@ -117,9 +125,10 @@ func createUser(user *models.User) (affected int64, err error) {
 
 //////////////////////////////////////////////////
 // these methods have to work with gin/session
-func createSession(user *models.User) (affected int64, err error) {
-	session := models.Session{
+func createSession(user *models.User) (affected int64, session *models.Session, err error) {
+	session = &models.Session{
 		UuId:      common.NewUUIDString(),
+		Name:      user.Name,
 		Email:     user.Email,
 		UserId:    user.Id,
 		CreatedAt: time.Now(),
@@ -148,5 +157,11 @@ func getUserByEmail(email string) (ok bool, user *models.User, err error) {
 
 func getUser(user *models.User) (ok bool, err error) {
 	ok, err = engine.Table("users").Get(user)
+	return
+}
+
+func deleteSessionByUUID(uuid string) (affected int64, err error) {
+	del := models.Session{UuId: uuid}
+	affected, err = engine.Table("sessions").Delete(&del)
 	return
 }

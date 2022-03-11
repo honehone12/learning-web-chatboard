@@ -4,8 +4,8 @@ import (
 	"chatboard/common"
 	"chatboard/models"
 	"chatboard/user"
-	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,26 +32,74 @@ func postSignUpAccount(ctx *gin.Context) {
 				Password: password,
 			},
 		})
-		if affected, ok := res.Data.(int64); ok {
-			if affected == 1 {
-				ctx.Redirect(http.StatusFound, "/user/login")
-				return
-			} else if gin.IsDebugging() {
-				redirectToError(ctx, fmt.Sprintf("returned value was %d", affected))
+		if _, ok := res.Data.(error); ok {
+			if gin.IsDebugging() {
+				redirectToError(ctx, res.Data.(error).Error())
 				return
 			}
-		} else if gin.IsDebugging() {
-			redirectToError(ctx, res.Data.(error).Error())
+		} else {
+			ctx.Redirect(http.StatusFound, "/user/login")
 			return
 		}
 	}
 	redirectToError(ctx, "sorry")
 }
 
+//////////////////////////////////////////////////
+// is good way encrypting user data here??
 func postAuthenticate(ctx *gin.Context) {
-
+	email := ctx.PostForm("email")
+	password := ctx.PostForm("password")
+	if len(email) > 0 && len(password) > 0 {
+		res := user.CallService(&common.Message{
+			Service:  common.ServiceCall,
+			FuncType: user.GetUserByEmail,
+			Data:     email,
+		})
+		if userAuth, ok := res.Data.(*models.User); ok {
+			if strings.Compare(
+				userAuth.Password,
+				common.Encrypt(password),
+			) == 0 {
+				res = user.CallService(&common.Message{
+					Service:  common.ServiceCall,
+					FuncType: user.CreateSession,
+					Data:     *userAuth,
+				})
+				if session, ok := res.Data.(*models.Session); ok {
+					ctx.SetSameSite(http.SameSiteStrictMode)
+					ctx.SetCookie(
+						"short-time",
+						session.UuId,
+						0,
+						"/",
+						"localhost",
+						true,
+						true,
+					)
+					ctx.Redirect(http.StatusFound, "/")
+					return
+				} else if gin.IsDebugging() {
+					redirectToError(ctx, res.Data.(error).Error())
+					return
+				}
+			}
+		} else if gin.IsDebugging() {
+			redirectToError(ctx, res.Data.(error).Error())
+			return
+		}
+	}
+	ctx.Redirect(http.StatusFound, "/user/login")
 }
 
 func getLogOut(ctx *gin.Context) {
-
+	uuid, err := ctx.Cookie("short-time")
+	if err == nil {
+		user.CallService(&common.Message{
+			Service:  common.ServiceCall,
+			FuncType: user.DeleteSessionByUUID,
+			Data:     uuid,
+		})
+	}
+	ctx.Redirect(http.StatusFound, "/")
 }
