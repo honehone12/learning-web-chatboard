@@ -114,7 +114,7 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 }
 
 //////////////////////////////////////////////////
-// is good way encrypting user data here??
+// works on tls only
 func createUser(user *models.User) (affected int64, err error) {
 	user.UuId = common.NewUUIDString()
 	user.Password = common.Encrypt(user.Password)

@@ -46,7 +46,7 @@ func postSignUpAccount(ctx *gin.Context) {
 }
 
 //////////////////////////////////////////////////
-// is good way encrypting user data here??
+// works on tls only
 func postAuthenticate(ctx *gin.Context) {
 	email := ctx.PostForm("email")
 	password := ctx.PostForm("password")

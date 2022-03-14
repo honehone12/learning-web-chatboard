@@ -109,6 +109,10 @@ func redirectToError(ctx *gin.Context, msg string) {
 	ctx.Redirect(http.StatusFound, strings.Join(url, ""))
 }
 
+//////////////////////////////////////////////////
+// belows can be gin middleware
+/////////////////////////////////////////////////
+
 // this is login session
 func checkLoggedIn(ctx *gin.Context) (err error) {
 	uuid, err := ctx.Cookie("short-time")
@@ -140,3 +144,5 @@ func checkFootprint(ctx gin.Context) {
 			Printf("cookie not found and not implemented yet")
 	}
 }
+
+//////////////////////////////////////////////////////

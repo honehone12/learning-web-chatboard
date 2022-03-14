@@ -14,7 +14,7 @@ type Thread struct {
 
 type Post struct {
 	Id          uint      `xorm:"ok autoincr 'id'"`
-	UuId        string    `xorm:"not null unique 'uu_id("`
+	UuId        string    `xorm:"not null unique 'uu_id'"`
 	Body        string    `xorm:"TEXT 'body'"`
 	Contributor string    `xorm:"contributor"`
 	UserId      uint      `xorm:"user_id"`
