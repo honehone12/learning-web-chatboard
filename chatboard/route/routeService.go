@@ -86,6 +86,34 @@ func getIndex(ctx *gin.Context) {
 		FuncType: thread.GetAllThreads,
 	})
 	if threads, ok := res.Data.([]models.Thread); ok {
+		//this should be done before /////////////////////
+		//testing many sql call
+		for i, t := range threads {
+			rg := thread.CallService(&common.Message{
+				Service:  common.ServiceCall,
+				FuncType: thread.GetNumReplies,
+				Data:     t.Id,
+			})
+			if n, ok := rg.Data.(int64); ok {
+				threads[i].NumReplies = uint(n)
+			} else {
+				common.LogError().Println(res.Data.(error).Error())
+				redirectToError(ctx, "could not get threads")
+				return
+			}
+			ru := thread.CallService(&common.Message{
+				Service:  common.ServiceCall,
+				FuncType: thread.UpdateThread,
+				Data:     t,
+			})
+			if _, ok := ru.Data.(error); ok {
+				common.LogError().Println(res.Data.(error).Error())
+				redirectToError(ctx, "could not get threads")
+				return
+			}
+		}
+		/////////////////////////////////////////////////////
+
 		if err := checkLoggedIn(ctx); err != nil {
 			ctx.HTML(http.StatusOK, "index.html", gin.H{
 				"navbar":  publicNavbar,

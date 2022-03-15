@@ -24,6 +24,7 @@ const (
 	GetThreadByUUID
 	CreateThread
 	CreatePost
+	UpdateThread
 )
 
 func CallService(msg *common.Message) *common.Message {
@@ -45,7 +46,7 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 	switch funcType {
 	case GetNumReplies:
 		resFuncType = GetNumReplies
-		var id int
+		var id uint
 		if err = common.ConvertType(data, &id); err != nil {
 			break
 		}
@@ -95,6 +96,13 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 			contrib.UserID,
 			contrib.UserName,
 		)
+	case UpdateThread:
+		resFuncType = UpdateThread
+		var thre models.Thread
+		if err = common.ConvertType(data, &thre); err != nil {
+			break
+		}
+		resData, err = updateThread(&thre)
 	default:
 		err = errors.New("recieved unknown function request")
 	}
@@ -108,7 +116,7 @@ func callServiceInternal(funcType common.FuncTypeT, data *interface{}) *common.M
 	}
 }
 
-func getNumReplies(id int) (int64, error) {
+func getNumReplies(id uint) (int64, error) {
 	return engine.Table("posts").Where("thread_id = ?", id).Count()
 }
 
@@ -147,6 +155,8 @@ func createThread(
 	return
 }
 
+///////////////////////////////////////////
+// need to update numreply of the thread
 func createPost(
 	body string,
 	threadID uint,
@@ -162,5 +172,10 @@ func createPost(
 		CreatedAt:   time.Now(),
 	}
 	affected, err = engine.Table("posts").InsertOne(&ins)
+	return
+}
+
+func updateThread(newThre *models.Thread) (affected int64, err error) {
+	affected, err = engine.Table("threads").ID(newThre.Id).Update(newThre)
 	return
 }

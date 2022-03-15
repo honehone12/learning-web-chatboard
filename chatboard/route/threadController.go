@@ -98,7 +98,6 @@ func getThread(ctx *gin.Context) {
 		})
 		if posts, ok := res.Data.([]models.Post); ok {
 			err := checkLoggedIn(ctx)
-
 			if err != nil {
 				ctx.HTML(http.StatusOK, "thread.html", gin.H{
 					"navbar": publicNavbar,
@@ -131,6 +130,7 @@ func getThread(ctx *gin.Context) {
 	redirectToError(ctx, "sorry")
 }
 
+//increment num reply of the thread needed
 func postPostToThread(ctx *gin.Context) {
 	var res *common.Message
 	if err := checkLoggedIn(ctx); err != nil {
