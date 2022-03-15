@@ -1,4 +1,5 @@
 {
     "adress": ":8080",
-    "dbname": "chatboard"
+    "dbname": "chatboard",
+    "log_to_file": "false"
 }
