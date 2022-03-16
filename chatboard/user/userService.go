@@ -133,7 +133,7 @@ func createSession(user *models.User) (affected int64, session *models.Session, 
 		UserId:    user.Id,
 		CreatedAt: time.Now(),
 	}
-	affected, err = engine.Table("sessions").InsertOne(&session)
+	affected, err = engine.Table("sessions").InsertOne(session)
 	return
 }
 
