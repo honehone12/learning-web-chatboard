@@ -121,7 +121,7 @@ func getNumReplies(id uint) (int64, error) {
 }
 
 func getAllPostsInThread(id uint) (posts []models.Post, err error) {
-	engine.Table("posts").Where("thread_id = ?", id).Find(&posts)
+	err = engine.Table("posts").Where("thread_id = ?", id).Find(&posts)
 	return
 }
 
